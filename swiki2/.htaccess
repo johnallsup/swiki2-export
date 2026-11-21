@@ -1,0 +1,4 @@
+# Apache 2.4+ Access Control
+<Files *.db>
+    Require all denied
+</Files>

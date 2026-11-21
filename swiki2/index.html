@@ -1,0 +1,2007 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>S-Wiki v2</title>
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.12.0/styles/github-dark-dimmed.min.css"
+  />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.12.0/highlight.min.js"></script>
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [["\\(", "\\)"]],
+        displayMath: [["\\[", "\\]"]],
+        processEscapes: false
+      },
+      options: {
+        skipHtmlTags: ["script", "noscript", "style", "textarea", "pre", "code"]
+      },
+      startup: {
+        typeset: false
+      }
+    };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/abcjs@6.7.2/dist/abcjs-basic-min.min.js"></script>
+  <style>
+    :root {
+      --bg: #111317;
+      --bg-elev: #181b21;
+      --bg-hover: #22262f;
+      --border: #2a2f3a;
+      --text: #e4e7ec;
+      --text-muted: #8b94a5;
+      --accent: #7c9cff;
+      --accent-dim: rgba(124, 156, 255, 0.14);
+      --danger: #f87171;
+      --success: #4ade80;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    /* Unlock Overlay */
+    #unlock-screen {
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 1rem;
+    }
+    .unlock-card {
+      width: 100%;
+      max-width: 420px;
+      background: var(--bg-elev);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.75rem;
+    }
+    .unlock-card h1 {
+      margin: 0 0 0.35rem 0;
+      font-size: 1.25rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+    .unlock-card p {
+      margin: 0 0 1.25rem 0;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+    .field { margin-bottom: 1rem; }
+    .field label {
+      display: block;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-bottom: 0.35rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    input[type="password"], input[type="text"] {
+      width: 100%;
+      background: var(--bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 0.55rem 0.7rem;
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+      outline: none;
+    }
+    input:focus { border-color: var(--accent); }
+
+    button {
+      background: var(--bg-hover);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 0.48rem 0.85rem;
+      font-size: 0.85rem;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.12s, border-color 0.12s;
+    }
+    button:hover:not(:disabled) {
+      border-color: var(--accent);
+      background: #272c37;
+    }
+    button:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+    button.primary {
+      background: var(--accent);
+      color: #0b0d12;
+      border-color: var(--accent);
+      font-weight: 600;
+    }
+    button.primary:hover:not(:disabled) { background: #93aeff; }
+    button.danger { color: var(--danger); }
+    button.danger:hover:not(:disabled) {
+      border-color: var(--danger);
+      background: rgba(248, 113, 113, 0.12);
+    }
+
+    /* Main Workspace Layout */
+    #app {
+      display: none;
+      height: 100vh;
+      grid-template-columns: 260px 1fr;
+      grid-template-rows: 46px 1fr;
+    }
+    body.hide-sidebar #app {
+      grid-template-columns: 1px 1fr;
+    }
+
+    #app.active { display: grid; }
+
+    header {
+      grid-column: 1 / -1;
+      background: var(--bg-elev);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 0.9rem;
+      gap: 0.75rem;
+    }
+    .brand {
+      font-family: var(--font-mono);
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .badge {
+      font-size: 0.7rem;
+      padding: 0.1rem 0.4rem;
+      border-radius: 4px;
+      background: var(--accent-dim);
+      color: var(--accent);
+      border: 1px solid rgba(124, 156, 255, 0.3);
+    }
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    #status-pill {
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-right: 0.4rem;
+    }
+    #status-pill.ok { color: var(--success); }
+    #status-pill.err { color: var(--danger); }
+
+    /* Sidebar Tree */
+    aside {
+      background: var(--bg-elev);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .sidebar-top {
+      padding: 0.65rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      gap: 0.4rem;
+    }
+    .sidebar-top button {
+      flex: 1;
+      padding: 0.38rem 0.5rem;
+      font-size: 0.8rem;
+    }
+    #tree-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0.5rem 0.35rem;
+      font-size: 0.86rem;
+    }
+    .tree-dir-label, .tree-page-item {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.32rem 0.5rem;
+      border-radius: 4px;
+      cursor: pointer;
+      user-select: none;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .tree-dir-label {
+      color: var(--text-muted);
+      font-weight: 600;
+      font-size: 0.8rem;
+      text-transform: lowercase;
+    }
+    .tree-dir-label:hover, .tree-page-item:hover { background: var(--bg-hover); }
+    .tree-page-item.active {
+      background: var(--accent-dim);
+      color: var(--accent);
+      font-weight: 500;
+    }
+    .tree-children { padding-left: 0.85rem; }
+    .sidebar-footer {
+      border-top: 1px solid var(--border);
+      padding: 0.65rem 0.75rem;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
+    }
+    .checkbox-row {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      cursor: pointer;
+    }
+
+    /* Main Editor / Preview Pane */
+    main {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: var(--bg);
+    }
+    .page-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.55rem 0.9rem;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-elev);
+    }
+    #page-path-display {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      background: var(--bg);
+      padding: 0.32rem 0.55rem;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+    }
+    #page-title-input {
+      flex: 1;
+      font-family: var(--font-sans);
+      font-weight: 600;
+      font-size: 0.95rem;
+      padding: 0.32rem 0.6rem;
+    }
+    .meta-stamp {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    .panes {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      overflow: hidden;
+    }
+    .panes.mode-edit { grid-template-columns: 1fr; }
+    .panes.mode-edit #preview-pane { display: none; }
+    .panes.mode-read { grid-template-columns: 1fr; }
+    .panes.mode-read #editor-textarea { display: none; }
+
+    #editor-textarea {
+      width: 100%;
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      border: none;
+      border-right: 1px solid var(--border);
+      padding: 1.1rem 1.25rem;
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+      line-height: 1.6;
+      resize: none;
+      outline: none;
+      tab-size: 2;
+    }
+
+    body.light-preview #preview-pane {
+      color: black;
+      background-color: white;
+    }
+    body.light-preview #preview-pane code {
+      color: white;
+    }
+    body.light-preview #preview-pane th {
+      color: white;
+    }
+    #preview-pane {
+      height: 100%;
+      overflow-y: auto;
+      padding: 1.1rem 1.6rem;
+      max-width: 920px;
+    }
+    #preview-pane h1, #preview-pane h2, #preview-pane h3,
+    #preview-pane h4, #preview-pane h5, #preview-pane h6 {
+      margin-top: 1.25em;
+      margin-bottom: 0.45em;
+      line-height: 1.25;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.25em;
+    }
+    #preview-pane h1:first-child { margin-top: 0; }
+    #preview-pane ul, #preview-pane ol {
+      padding-left: 1.4rem;
+      margin: 0.4rem 0;
+    }
+    #preview-pane li { margin: 0.18rem 0; }
+    #preview-pane code {
+      font-family: var(--font-mono);
+      background: var(--bg-elev);
+      padding: 0.15rem 0.35rem;
+      border-radius: 4px;
+      font-size: 0.85em;
+    }
+    #preview-pane pre {
+      position: relative;
+      background: var(--bg-elev);
+      border: 1px solid var(--border);
+      padding: 0.85rem 1rem;
+      border-radius: 6px;
+      overflow-x: auto;
+    }
+    #preview-pane pre code {
+      background: transparent;
+      padding: 0;
+    }
+    .code-copy-btn {
+      position: absolute;
+      top: 0.45rem;
+      right: 0.45rem;
+      padding: 0.2rem 0.5rem;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      background: var(--bg);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      opacity: 0;
+      transition: opacity 0.14s, color 0.14s, border-color 0.14s;
+    }
+    #preview-pane pre:hover .code-copy-btn,
+    .code-copy-btn:focus-visible,
+    .code-copy-btn.copied {
+      opacity: 1;
+    }
+    .code-copy-btn.copied {
+      color: var(--success);
+      border-color: var(--success);
+    }
+    #preview-pane blockquote {
+      margin: 0.8rem 0;
+      padding: 0.2rem 0.9rem;
+      border-left: 3px solid var(--accent);
+      color: var(--text-muted);
+    }
+    #preview-pane a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+    #preview-pane a:hover { text-decoration: underline; }
+    #preview-pane table {
+      border-collapse: collapse;
+      margin: 0.8rem 0;
+      width: auto;
+      min-width: 240px;
+      border: 1px solid var(--border);
+      font-size: 0.88rem;
+    }
+    #preview-pane th, #preview-pane td {
+      border: 1px solid var(--border);
+      padding: 0.42rem 0.7rem;
+      text-align: left;
+    }
+    #preview-pane th {
+      background: var(--bg-elev);
+      font-weight: 600;
+    }
+    #preview-pane svg.swiki-badge { vertical-align: middle; }
+    #preview-pane mjx-container[display="true"] {
+      overflow-x: auto;
+      max-width: 100%;
+    }
+
+    /* Quick Jump Modal (Ctrl+K) */
+    #quick-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      display: none;
+      align-items: flex-start;
+      justify-content: center;
+      padding-top: 12vh;
+      z-index: 90;
+    }
+    #quick-modal.open { display: flex; }
+    .modal-box {
+      width: 100%;
+      max-width: 480px;
+      background: var(--bg-elev);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+    }
+    .modal-box input {
+      border: none;
+      border-bottom: 1px solid var(--border);
+      border-radius: 0;
+      padding: 0.75rem 0.9rem;
+      font-size: 0.95rem;
+    }
+    #quick-results {
+      max-height: 280px;
+      overflow-y: auto;
+    }
+    .quick-item {
+      padding: 0.55rem 0.9rem;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    }
+    .quick-item:hover, .quick-item.selected {
+      background: var(--accent-dim);
+      color: var(--accent);
+    }
+    .quick-item span.path {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    img.centre {
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    img.shadow {
+      box-shadow: 0.5rem 0.5rem 0.5rem black;
+    }
+
+    span.rabbit-hole {
+      border: 1px solid #ff7;
+      padding: 0.2rem;
+      background-color: #700;
+      color: #ff7;
+    }
+    span.rabbit-error {
+      border: 2px solid white;
+      background-color: red;
+      color: black;
+    }
+
+  </style>
+</head>
+<body>
+
+  <!-- Unlock Screen -->
+  <div id="unlock-screen">
+    <form class="unlock-card" id="unlock-form">
+      <h1>S-Wiki <span class="badge">v2</span></h1>
+      <div class="field">
+        <label for="passphrase-input">Passphrase</label>
+        <input id="passphrase-input" type="password" autocomplete="current-password" placeholder="Enter passphrase..." required autofocus />
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:0.5rem;">
+        <span id="unlock-error" style="color:var(--danger); font-size:0.82rem;"></span>
+        <button type="submit" class="primary" id="unlock-btn">Derive Keys &amp; Unlock</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Main Application -->
+  <div id="app">
+    <header>
+      <div class="brand">
+        <span id="sidebar-toggle">☰</span>
+        swiki <span class="badge">v2</span>
+        <span id="block-indicator" style="font-weight:400; font-size:0.76rem; color:var(--text-muted);">1 × 4096 B</span>
+      </div>
+      <div class="header-actions">
+        <span id="status-pill">Ready</span>
+        <button id="btn-quick-open" title="Quick Open (Ctrl+K)">Jump (Ctrl+K)</button>
+        <button id="btn-view-mode" title="Toggle View Mode (Ctrl+E)">Split View</button>
+        <button id="btn-save" class="primary" title="Save Page (Ctrl+S)">Save</button>
+        <button id="btn-lock" title="Lock &amp; Purge Keys from RAM">Lock</button>
+      </div>
+    </header>
+
+    <aside>
+      <div class="sidebar-top">
+        <button id="btn-new-page" title="New Page (Ctrl+Shift+K)">+ Page</button>
+        <button id="btn-reload">Sync</button>
+      </div>
+      <div id="tree-container"></div>
+      <div class="sidebar-footer">
+        <label class="checkbox-row" title="Does not update manifest if not checked.">
+          <input type="checkbox" checked id="chk-update-manifest" />
+          <span>Update manifest on save</span>
+        </label>
+        <label class="checkbox-row" title="Generates 1 backdated Markov decoy workspace (21 padded rows) inside the same atomic save transaction">
+          <input type="checkbox" id="chk-trickle-chaff" />
+          <span>Trickle 1 decoy workspace on save</span>
+        </label>
+        <div style="display:flex; justify-content:space-between;">
+          <span id="page-count-label">0 pages</span>
+        </div>
+      </div>
+    </aside>
+
+    <main>
+      <div class="page-toolbar">
+        <span id="page-path-display">/home</span>
+        <input id="page-title-input" type="text" placeholder="Page Title" />
+        <span class="meta-stamp" id="page-updated-label">—</span>
+        <button id="btn-delete" class="danger">Delete</button>
+      </div>
+      <div class="panes" id="panes-container">
+        <textarea id="editor-textarea" placeholder="Write Markdown here... Use \(x^2\) or \[...\] for math, [[flibble:tag]], or ```csv sep=| ... ```"></textarea>
+        <div id="preview-pane"></div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Quick Open Modal -->
+  <div id="quick-modal">
+    <div class="modal-box">
+      <input id="quick-input" type="text" placeholder="Filter pages by title or /path..." />
+      <div id="quick-results"></div>
+    </div>
+  </div>
+
+  <script type="module">
+    const API_URL = "./api.php";
+    const INITIAL_TITLE = document.title
+
+    // ========================================================================
+    // 0. ExtensibleMarkdownParser (with nested lists, specials & math tokens)
+    // ========================================================================
+    export class ExtensibleMarkdownParser {
+      constructor(options = {}) {
+        this.blockSpecials = new Map();
+        this.inlineSpecials = new Map();
+        this.normalizeWikiLink =
+          typeof options.normalizeWikiLink === "function"
+            ? options.normalizeWikiLink
+            : (target) => {
+                const t = target.trim();
+                return t.startsWith("/") ? t : "/" + t;
+              };
+
+        this._ingestSpecials(this.blockSpecials, options.blockSpecials);
+        this._ingestSpecials(this.inlineSpecials, options.inlineSpecials);
+      }
+
+      _ingestSpecials(targetMap, source) {
+        if (!source) return;
+        if (source instanceof Map) {
+          for (const [k, fn] of source.entries()) {
+            if (typeof fn === "function") {
+              targetMap.set(String(k).toLowerCase(), fn);
+            }
+          }
+        } else if (typeof source === "object") {
+          for (const [k, fn] of Object.entries(source)) {
+            if (typeof fn === "function") {
+              targetMap.set(String(k).toLowerCase(), fn);
+            }
+          }
+        }
+      }
+
+      registerBlockSpecial(name, func) {
+        if (typeof func !== "function") {
+          throw new TypeError(`Block special '${name}' handler must be a function.`);
+        }
+        this.blockSpecials.set(String(name).toLowerCase(), func);
+        return this;
+      }
+
+      registerInlineSpecial(name, func) {
+        if (typeof func !== "function") {
+          throw new TypeError(`Inline special '${name}' handler must be a function.`);
+        }
+        this.inlineSpecials.set(String(name).toLowerCase(), func);
+        return this;
+      }
+
+      escapeHtml(str) {
+        return String(str)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      }
+
+      _parseFenceHeader(headerStr) {
+        const trimmed = headerStr.trim();
+        if (!trimmed) return { lang: "", meta: {}, rawMeta: "" };
+        const firstSpace = trimmed.search(/\s/);
+        const lang = (firstSpace === -1 ? trimmed : trimmed.slice(0, firstSpace)).toLowerCase();
+        const rawMeta = firstSpace === -1 ? "" : trimmed.slice(firstSpace + 1).trim();
+
+        const meta = {};
+        if (rawMeta) {
+          for (const token of rawMeta.split(/\s+/)) {
+            const eq = token.indexOf("=");
+            if (eq > 0) {
+              const key = token.slice(0, eq).toLowerCase();
+              let val = token.slice(eq + 1);
+              if (
+                (val.startsWith('"') && val.endsWith('"')) ||
+                (val.startsWith("'") && val.endsWith("'"))
+              ) {
+                val = val.slice(1, -1);
+              }
+              if (val === "\\t") val = "\t";
+              meta[key] = val;
+            } else {
+              meta[token.toLowerCase()] = true;
+            }
+          }
+        }
+
+        return { lang, meta, rawMeta };
+      }
+
+      _isExternalUrl(href) {
+        return /^(?:https?:\/\/|mailto:|tel:|data:|#)/i.test(href.trim());
+      }
+
+      _extractMathSpan(text, mathTokens) {
+        const stash = (rawMath) => {
+          const id = `\u0002MATH${mathTokens.length}\u0002`;
+          mathTokens.push(rawMath);
+          return id;
+        };
+
+        // Block display math: \[ ... \]
+        let out = text.replace(/\\\[([\s\S]*?)\\\]/g, (match) => stash(match));
+        // Inline math: \( ... \)
+        out = out.replace(/\\\(([\s\S]*?)\\\)/g, (match) => stash(match));
+        return out;
+      }
+
+      _restoreMathSpan(html, mathTokens) {
+        return html.replace(/\u0002MATH(\d+)\u0002/g, (_, idx) => mathTokens[Number(idx)]);
+      }
+
+      renderInline(text, mathTokens = []) {
+        const tokens = [];
+        const stash = (html) => {
+          const id = `\u0001TOK${tokens.length}\u0001`;
+          tokens.push(html);
+          return id;
+        };
+
+        let work = this._extractMathSpan(String(text), mathTokens);
+
+        // 1. Inline code (`...`)
+        work = work.replace(/`([^`\n]+)`/g, (_, code) =>
+          stash(`<code>${this.escapeHtml(code)}</code>`)
+        );
+
+        // 2. Double-bracket [[name:something]] (inline special) vs [[linkname]] (local wiki link)
+        work = work.replace(/\[\[([^\[\]\n]+)\]\]/g, (_, inner) => {
+          const colonIdx = inner.indexOf(":");
+          if (colonIdx > 0) {
+            const specialName = inner.slice(0, colonIdx).trim().toLowerCase();
+            const payload = inner.slice(colonIdx + 1);
+            const handler = this.inlineSpecials.get(specialName);
+            if (handler) {
+              return stash(String(handler(payload, this)));
+            }
+          }
+          const target = this.normalizeWikiLink(inner);
+          return stash(
+            `<a href="#" data-wiki-link="${this.escapeHtml(target)}">${this.escapeHtml(inner.trim())}</a>`
+          );
+        });
+
+        // 2.5. Images
+        work = work.replace(/!\[([^\[\]\n]*)\]\{([^()]+)\}\(([^()\s]+)\)/g, (_, label, classes, target) => {
+          if( classes === "cs" ) { classes = "centre shadow" }
+          return stash(
+            `<img src="${target}" class="${classes}"/>`
+          );
+        });
+        work = work.replace(/!\[([^\[\]\n]*)\]\(([^()\s]+)\)/g, (_, label, target) => {
+          return stash(
+            `<img src="${target}" />`
+          );
+        });
+
+        // 3. Markdown links [label](target): local namespace link vs external URL
+        work = work.replace(/\[([^\[\]\n]+)\]\(([^()]+)\)/g, (_, label, target) => {
+          if (this._isExternalUrl(target)) {
+            return stash(
+              `<a href="${this.escapeHtml(target)}" target="_blank" rel="noopener noreferrer">${this.escapeHtml(label)}</a>`
+            );
+          }
+          const normTarget = this.normalizeWikiLink(target);
+          return stash(
+            `<a href="#" data-wiki-link="${this.escapeHtml(normTarget)}">${this.escapeHtml(label)}</a>`
+          );
+        });
+
+        // Escape remaining plain text (leaving $ untouched), then apply bold / italic
+        work = this.escapeHtml(work);
+        work = work.replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>");
+        work = work.replace(/(^|[^*])\*([^*\n]+)\*/g, (_, lead, body) => `${lead}<em>${body}</em>`);
+
+        return work.replace(/\u0001TOK(\d+)\u0001/g, (_, idx) => tokens[Number(idx)]);
+      }
+
+      _renderNestedList(listItems, mathTokens) {
+        if (!listItems.length) return "";
+
+        const makeFrame = (indent, kind) => ({ indent, kind, items: [] });
+
+        const root = makeFrame(listItems[0].indent, listItems[0].kind);
+        const stack = [root];
+
+        for (const item of listItems) {
+          while (stack.length > 1 && item.indent < stack[stack.length - 1].indent) {
+            stack.pop();
+          }
+
+          let currentFrame = stack[stack.length - 1];
+
+          if (item.indent > currentFrame.indent) {
+            const parentItems = currentFrame.items;
+            const hostLi = parentItems.length > 0 ? parentItems[parentItems.length - 1] : null;
+            const childFrame = makeFrame(item.indent, item.kind);
+
+            if (hostLi) {
+              hostLi.subLists.push(childFrame);
+            } else {
+              currentFrame.items.push({ text: "", subLists: [childFrame] });
+            }
+
+            stack.push(childFrame);
+            currentFrame = childFrame;
+          } else if (item.kind !== currentFrame.kind) {
+            const prevLi = currentFrame.items.length > 0
+              ? currentFrame.items[currentFrame.items.length - 1]
+              : null;
+
+            if (prevLi) {
+              const childFrame = makeFrame(item.indent, item.kind);
+              prevLi.subLists.push(childFrame);
+              stack.push(childFrame);
+              currentFrame = childFrame;
+            } else {
+              const replacement = makeFrame(item.indent, item.kind);
+              stack[stack.length - 1] = replacement;
+              currentFrame = replacement;
+            }
+          }
+
+          currentFrame.items.push({ text: item.text, subLists: [] });
+        }
+
+        const renderFrame = (frame) => {
+          const tag = frame.kind === "ol" ? "ol" : "ul";
+          const lis = frame.items
+            .map((li) => {
+              const childrenHtml = li.subLists.map(renderFrame).join("");
+              return `<li>${this.renderInline(li.text, mathTokens)}${childrenHtml}</li>`;
+            })
+            .join("");
+          return `<${tag}>${lis}</${tag}>`;
+        };
+
+        return renderFrame(root);
+      }
+
+      parse(markdown) {
+        const mathTokens = [];
+        // Extract multi-line display math \[...\] before line splitting while keeping fenced blocks intact
+        const normalized = String(markdown).replace(/\r\n?/g, "\n");
+        const lines = normalized.split("\n");
+        const output = [];
+        let i = 0;
+
+        while (i < lines.length) {
+          const line = lines[i];
+
+          // 1. Fenced code / block-special blocks (```lang meta...)
+          const fenceMatch = line.match(/^\s*```(.*)$/);
+          if (fenceMatch) {
+            const { lang, meta, rawMeta } = this._parseFenceHeader(fenceMatch[1]);
+            const contentLines = [];
+            i++;
+            while (i < lines.length && !/^\s*```\s*$/.test(lines[i])) {
+              contentLines.push(lines[i]);
+              i++;
+            }
+            if (i < lines.length) i++;
+
+            const content = contentLines.join("\n");
+            const specialFn = lang ? this.blockSpecials.get(lang) : null;
+
+            if (specialFn) {
+              output.push(
+                String(
+                  specialFn(
+                    { lang, meta, rawMeta, content, lines: contentLines },
+                    this
+                  )
+                )
+              );
+            } else {
+              const langAttr = lang ? ` class="language-${this.escapeHtml(lang)}"` : "";
+              output.push(`<pre><code${langAttr}>${this.escapeHtml(content)}</code></pre>`);
+            }
+            continue;
+          }
+
+          // 2. Multi-line display math block starting with \[
+          if (/^\s*\\\[/.test(line)) { const mathLines = [line]; let closed = /\\\]\s*$/.test(line) && !/^\s*\\\[\s*\\\]\s*$/.test(line);
+            i++;
+            while (!closed && i < lines.length) {
+              mathLines.push(lines[i]);
+              if (/\\\]/.test(lines[i])) {
+                closed = true;
+              }
+              i++;
+            }
+            const rawBlock = mathLines.join("\n");
+            const tokenId = `\u0002MATH${mathTokens.length}\u0002`;
+            mathTokens.push(rawBlock);
+            output.push(`<p>${tokenId}</p>`);
+            continue;
+          }
+
+          // 3. Blank lines
+          if (line.trim() === "") {
+            i++;
+            continue;
+          }
+
+          // 4. Headings (# .. ######)
+          const headingMatch = line.match(/^(#{1,6})\s+(.*)$/);
+          if (headingMatch) {
+            const level = headingMatch[1].length;
+            output.push(`<h${level}>${this.renderInline(headingMatch[2].trim(), mathTokens)}</h${level}>`);
+            i++;
+            continue;
+          }
+
+          // 5. Blockquotes (> ...)
+          if (/^\s*>\s?/.test(line)) {
+            const quoteLines = [];
+            while (i < lines.length && /^\s*>\s?/.test(lines[i])) {
+              quoteLines.push(lines[i].replace(/^\s*>\s?/, ""));
+              i++;
+            }
+            output.push(`<blockquote>${this.parse(quoteLines.join("\n"))}</blockquote>`);
+            continue;
+          }
+
+          // 6. Nested Lists (unordered -, *, + or ordered 1.)
+          const listLineMatch = line.match(/^(\s*)(?:([-*+])|(\d+)\.)\s+(.*)$/);
+          if (listLineMatch) {
+            const collected = [];
+            while (i < lines.length) {
+              const m = lines[i].match(/^(\s*)(?:([-*+])|(\d+)\.)\s+(.*)$/);
+              if (!m) break;
+              collected.push({
+                indent: m[1].replace(/\t/g, "  ").length,
+                kind: m[3] ? "ol" : "ul",
+                text: m[4],
+              });
+              i++;
+            }
+            output.push(this._renderNestedList(collected, mathTokens));
+            continue;
+          }
+
+          // 7. Paragraphs
+          const paraLines = [];
+          while (
+            i < lines.length &&
+            lines[i].trim() !== "" &&
+            !/^\s*```/.test(lines[i]) &&
+            !/^\s*\\\[/.test(lines[i]) &&
+            !/^(#{1,6})\s+/.test(lines[i]) &&
+            !/^\s*>\s?/.test(lines[i]) &&
+            !/^(\s*)(?:([-*+])|(\d+)\.)\s+/.test(lines[i])
+          ) {
+            paraLines.push(lines[i].trim());
+            i++;
+          }
+          if (paraLines.length > 0) {
+            output.push(`<p>${this.renderInline(paraLines.join(" "), mathTokens)}</p>`);
+          }
+        }
+
+        return this._restoreMathSpan(output.join("\n"), mathTokens);
+      }
+    }
+
+    export function abcBlockSpecial(block, parser) {
+      const content = block.lines.join("\n")
+      console.log("abc",content)
+      return `<div class="abc-to-render">${content}</div>`
+    }
+
+    export function csvBlockSpecial(block, parser) {
+      const sep = typeof block.meta?.sep === "string" && block.meta.sep.length > 0 ? block.meta.sep : ",";
+      const rawLines = block.lines.filter((l) => l.length > 0);
+      if (!rawLines.length) return "<table></table>";
+
+      let hasHeader = false;
+      let startIdx = 0;
+      const headPrefix = "csvhead:";
+
+      if (rawLines[0].toLowerCase().startsWith(headPrefix)) {
+        hasHeader = true;
+        startIdx = 1;
+      }
+
+      const renderRowCells = (lineStr, tagName) => {
+        const cells = lineStr.split(sep);
+        return cells
+          .map((cell) => `<${tagName}>${parser.renderInline(cell.trim())}</${tagName}>`)
+          .join("");
+      };
+
+      let html = "<table>";
+      if (hasHeader) {
+        const headerLine = rawLines[0].slice(headPrefix.length);
+        html += `<thead><tr>${renderRowCells(headerLine, "th")}</tr></thead>`;
+      }
+
+      const bodyLines = rawLines.slice(startIdx);
+      if (bodyLines.length > 0) {
+        html += "<tbody>";
+        for (const rLine of bodyLines) {
+          html += `<tr>${renderRowCells(rLine, "td")}</tr>`;
+        }
+        html += "</tbody>";
+      }
+
+      html += "</table>";
+      return html;
+    }
+
+    // ========================================================================
+    // 1. Web Crypto v2 Engine & Padding (4096-byte UTF-8 alignment)
+    // ========================================================================
+    const WIKI_V2 = {
+      VERSION: 2,
+      BLOCK_SIZE: 4096,
+      STATIC_SALT: "swiki-static-global-salt-v2",
+      PATH_SALT: "wiki-path-salt-v2",
+      PATH_INFO: "path-primary-key-derivation",
+      DATA_SALT: "wiki-data-salt-v2",
+      DATA_INFO: "content-encryption-key-derivation",
+      MANIFEST_PATH: "__system__/manifest",
+      PBKDF2_ITERATIONS: 100000,
+    };
+
+    const encoder = new TextEncoder();
+    const decoder = new TextDecoder();
+
+    function padJsonUtf8(payloadObj, blockSize = WIKI_V2.BLOCK_SIZE) {
+      const baseObj = { ...payloadObj, _pad: "" };
+      const baseBytes = encoder.encode(JSON.stringify(baseObj)).byteLength;
+      const remainder = baseBytes % blockSize;
+      const padBytes = remainder === 0 ? 0 : blockSize - remainder;
+      baseObj._pad = " ".repeat(padBytes);
+      const paddedStr = JSON.stringify(baseObj);
+      if (encoder.encode(paddedStr).byteLength % blockSize !== 0) {
+        throw new Error("UTF-8 block padding alignment invariant failed.");
+      }
+      return paddedStr;
+    }
+
+    function unpadJsonUtf8(paddedJsonStr) {
+      const obj = JSON.parse(paddedJsonStr);
+      if (obj && typeof obj === "object") delete obj._pad;
+      return obj;
+    }
+
+    function bytesToHex(bytes) {
+      let hex = "";
+      for (let i = 0; i < bytes.length; i++) hex += bytes[i].toString(16).padStart(2, "0");
+      return hex;
+    }
+
+    function bytesToBase64(bytes) {
+      let bin = "";
+      const chunk = 0x8000;
+      for (let i = 0; i < bytes.length; i += chunk) {
+        bin += String.fromCharCode(...bytes.subarray(i, i + chunk));
+      }
+      return btoa(bin);
+    }
+
+    function base64ToBytes(b64) {
+      const bin = atob(b64);
+      const out = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+      return out;
+    }
+
+    function randomInt(max) {
+      const arr = new Uint32Array(1);
+      crypto.getRandomValues(arr);
+      return arr[0] % max;
+    }
+
+    class BrowserCryptoEngineV2 {
+      constructor() {
+        this.kPathKey = null;
+        this.kDataKey = null;
+      }
+
+      async initialize(passphrase) {
+        const keyMaterial = await crypto.subtle.importKey(
+          "raw", encoder.encode(passphrase), "PBKDF2", false, ["deriveBits"]
+        );
+        const masterBits = await crypto.subtle.deriveBits(
+          { name: "PBKDF2", salt: encoder.encode(WIKI_V2.STATIC_SALT), iterations: WIKI_V2.PBKDF2_ITERATIONS, hash: "SHA-256" },
+          keyMaterial, 256
+        );
+        const hkdfKey = await crypto.subtle.importKey("raw", masterBits, "HKDF", false, ["deriveKey"]);
+        this.kPathKey = await crypto.subtle.deriveKey(
+          { name: "HKDF", hash: "SHA-256", salt: encoder.encode(WIKI_V2.PATH_SALT), info: encoder.encode(WIKI_V2.PATH_INFO) },
+          hkdfKey, { name: "HMAC", hash: "SHA-256", length: 256 }, false, ["sign"]
+        );
+        this.kDataKey = await crypto.subtle.deriveKey(
+          { name: "HKDF", hash: "SHA-256", salt: encoder.encode(WIKI_V2.DATA_SALT), info: encoder.encode(WIKI_V2.DATA_INFO) },
+          hkdfKey, { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]
+        );
+      }
+
+      lock() {
+        this.kPathKey = null;
+        this.kDataKey = null;
+      }
+
+      async hashPath(wikiPath) {
+        const norm = wikiPath.trim().toLowerCase();
+        const sig = await crypto.subtle.sign("HMAC", this.kPathKey, encoder.encode(norm));
+        return bytesToHex(new Uint8Array(sig));
+      }
+
+      async encryptObject(payloadObj) {
+        const plaintext = encoder.encode(padJsonUtf8(payloadObj));
+        const iv = crypto.getRandomValues(new Uint8Array(12));
+        const cipherBuf = await crypto.subtle.encrypt({ name: "AES-GCM", iv, tagLength: 128 }, this.kDataKey, plaintext);
+        const cipherBytes = new Uint8Array(cipherBuf);
+        const combined = new Uint8Array(12 + cipherBytes.length);
+        combined.set(iv, 0);
+        combined.set(cipherBytes, 12);
+        return bytesToBase64(combined);
+      }
+
+      async decryptObject(base64Payload) {
+        const combined = base64ToBytes(base64Payload);
+        const iv = combined.subarray(0, 12);
+        const cipherBytes = combined.subarray(12);
+        const plainBuf = await crypto.subtle.decrypt({ name: "AES-GCM", iv, tagLength: 128 }, this.kDataKey, cipherBytes);
+        return unpadJsonUtf8(decoder.decode(plainBuf));
+      }
+    }
+
+    // ========================================================================
+    // 2. Trickle Chaff & api.php Client
+    // ========================================================================
+    const CORPUS = `
+      Morning light settles across the estuary while the tide turns slowly against the stone quay.
+      Notes on system architecture: keep the state machine small, isolate side effects, and verify invariants.
+      In dynamical systems, small perturbations in initial conditions compound across iterations until trajectories diverge.
+      Practice requires patience; tension in the shoulders interrupts balance and slows the transition between movements.
+      When designing storage formats, uniform block sizes eliminate length side channels without complicating the wire protocol.
+
+      One morning, when Gregor Samsa woke from troubled dreams, he found himself
+      transformed in his bed into a horrible vermin. He lay on his armour-like back,
+      and if he lifted his head a little he could see his brown belly, slightly domed
+      and divided by arches into stiff sections. The bedding was hardly able to cover
+      it and seemed ready to slide off any moment. His many legs, pitifully thin
+      compared with the size of the rest of him, waved about helplessly as he looked.
+      "What's happened to me?
+
+      "he thought. It wasn't a dream. His room, a proper human room although a
+      little too small, lay peacefully between its four familiar walls. A collection
+      of textile samples lay spread out on the table - Samsa was a travelling
+      salesman - and above it there hung a picture that he had recently cut out of an
+      illustrated magazine and housed in a nice, gilded frame. It showed a lady
+      fitted out with a fur hat and fur boa who sat upright, raising a heavy fur muff
+      that covered the whole of her lower arm towards the viewer.
+
+      Gregor then turned to look out the window at the dull weather. Drops of rain
+      could be heard hitting the pane, which made him feel quite sad. "How about if I
+      sleep a little bit longer and forget all this nonsense", he thought, but that
+      was something he was unable to do because he was used to sleeping on his right,
+      and in his present state couldn't get into that position. However hard he threw
+      himself onto his right, he always rolled back to where he was.
+
+      He must have tried it a hundred times, shut his eyes so that he wouldn't have
+      to look at the floundering legs, and only stopped when he began to feel a mild,
+      dull pain there that he had never felt before. "Oh, God", he thought, "what a
+      strenuous career it is that I've chosen! Travelling day in and day out.
+
+      Doing business like this takes much more effort than doing your own business at
+      home, and on top of that there's the curse of travelling, worries about making
+      train connections, bad and irregular food, contact with different people all
+      the time so that you can never get to know anyone or become friendly with them.
+      It can all go to Hell!
+
+      "He felt a slight itch up on his belly; pushed himself slowly up on his back
+      towards the headboard so that he could lift his head better; found where the
+      itch was, and saw that it was covered with lots of little white spots which he
+      didn't know what to make of; and when he tried to feel the place with one of
+      his legs he drew it quickly back because as soon as he touched it he was
+      overcome by a cold shudder. He slid back into his former position. "Getting up
+      early all the time", he thought, "it makes you stupid. You've got to get enough
+      sleep.
+
+      Other travelling salesmen live a life of luxury. For instance, whenever I go
+      back to the guest house during the morning to copy out the contract, these
+      gentlemen are always still sitting there eating their breakfasts. I ought to
+      just try that with my boss; I'd get kicked out on the spot. But who knows,
+      maybe that would be the best thing for me. If I didn't have my parents to think
+      about I'd have given in my notice a long time ago, I'd have gone up to the boss
+      and told him just what I think, tell him everything I would, let him know just
+      what I feel.
+
+      He'd fall right off his desk! And it's a funny sort of business to be sitting
+      up there at your desk, talking down at your subordinates from up there,
+      especially when you have to go right up close because the boss is hard of
+      hearing. Well, there's still some hope; once I've got the money together to pay
+      off my parents' debt to him - another five or six years I suppose - that's
+      definitely what I'll do. That's when I'll make the big change. First of all
+      though, I've got to get up, my train leaves at five.
+
+      "And he looked over at the alarm clock, ticking on the chest of drawers. "God
+      in Heaven! " he thought. It was half past six and the hands were quietly moving
+      forwards, it was even later than half past, more like quarter to seven. Had the
+      alarm clock not rung? He could see from the bed that it had been set for four
+      o'clock as it should have been; it certainly must have rung. Yes, but was it
+      possible to quietly sleep through that furniture-rattling noise? True, he had
+      not slept peacefully, but probably all the more deeply because of that. What
+      should he do now?
+
+      The next train went at seven; if he were to catch that he would have to rush
+      like mad and the collection of samples was still not packed, and he did not at
+      all feel particularly fresh and lively. And even if he did catch the train he
+      would not avoid his boss's anger as the office assistant would have been there
+      to see the five o'clock train go, he would have put in his report about
+      Gregor's not being there a long time ago. The office assistant was the boss's
+      man, spineless, and with no understanding. What about if he reported sick? But
+      that would be extremely strained and suspicious as in fifteen years of service
+      Gregor had never once yet been ill. His boss would certainly come round with
+      the doctor from the medical insurance company, accuse his parents of having a
+      lazy son, and accept the doctor's recommendation not to make any claim as the
+      doctor believed that no-one was ever ill but that many were workshy. And what's
+      more, would he have been entirely wrong in this case? Gregor
+    `;
+
+
+    async function buildMarkovDecoyWorkspaceEntries() {
+      const words = CORPUS.replace(/\s+/g, " ").trim().split(" ");
+      const pickPhrase = (len) => {
+        const start = randomInt(Math.max(1, words.length - len));
+        return words.slice(start, start + len).join(" ");
+      };
+      const folderPool = ["notes", "journal", "projects", "archive", "ideas"];
+      const now = Date.now();
+      const workspaceAgeMs = (30 + randomInt(300)) * 86400 * 1000;
+      const origin = now - workspaceAgeMs;
+
+      const rawKey = crypto.getRandomValues(new Uint8Array(32));
+      const aesKey = await crypto.subtle.importKey("raw", rawKey, { name: "AES-GCM" }, false, ["encrypt"]);
+
+      const encryptEphemeral = async (obj) => {
+        const plaintext = encoder.encode(padJsonUtf8(obj));
+        const iv = crypto.getRandomValues(new Uint8Array(12));
+        const buf = await crypto.subtle.encrypt({ name: "AES-GCM", iv, tagLength: 128 }, aesKey, plaintext);
+        const out = new Uint8Array(12 + buf.byteLength);
+        out.set(iv, 0);
+        out.set(new Uint8Array(buf), 12);
+        return bytesToBase64(out);
+      };
+
+      const entries = [];
+      const tree = {};
+      let latest = origin;
+
+      for (let i = 0; i < 20; i++) {
+        const created = origin + randomInt(workspaceAgeMs);
+        const updated = Math.min(now, created + (randomInt(100) < 40 ? randomInt(7 * 86400 * 1000) : 0));
+        if (updated > latest) latest = updated;
+
+        const title = i === 0 ? "Home" : pickPhrase(3).replace(/[^a-zA-Z ]/g, "");
+        const content = `# ${title}\n\n${pickPhrase(16)}\n\n- ${pickPhrase(10)}\n- ${pickPhrase(12)}\n`;
+        const k = bytesToHex(crypto.getRandomValues(new Uint8Array(32)));
+        const v = await encryptEphemeral({ v: WIKI_V2.VERSION, type: "page", title, content, created, updated });
+        entries.push({ k, v });
+
+        if (i === 0) {
+          tree.home = { type: "page", title: "Home", updated };
+        } else {
+          const folder = folderPool[randomInt(folderPool.length)];
+          if (!tree[folder]) tree[folder] = { type: "directory", children: {} };
+          tree[folder].children[`note-${i}`] = { type: "page", title, updated };
+        }
+      }
+
+      const manifestK = bytesToHex(crypto.getRandomValues(new Uint8Array(32)));
+      const manifestV = await encryptEphemeral({ v: WIKI_V2.VERSION, type: "manifest", updated: latest, tree });
+      entries.push({ k: manifestK, v: manifestV });
+      return entries;
+    }
+
+    class ApiPhpWikiClient {
+      constructor(cryptoEngine) {
+        this.crypto = cryptoEngine;
+      }
+
+      normalizePath(p) {
+        let clean = p.trim().replace(/\/+/g, "/");
+        if (!clean.startsWith("/")) clean = "/" + clean;
+        if (clean.length > 1 && clean.endsWith("/")) clean = clean.slice(0, -1);
+        return clean;
+      }
+
+      async _getRaw(k) {
+        const res = await fetch(`${API_URL}?k=${encodeURIComponent(k)}`, { credentials: "same-origin" });
+        if (res.status === 404) return null;
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({ error: res.statusText }));
+          throw new Error(err.error || `HTTP ${res.status}`);
+        }
+        return (await res.json()).v;
+      }
+
+      async _postBatch(entries) {
+        const res = await fetch(API_URL, {
+          method: "POST",
+          credentials: "same-origin",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ entries }),
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({ error: res.statusText }));
+          throw new Error(err.error || `HTTP ${res.status}`);
+        }
+        return res.json();
+      }
+
+      async _deleteRaw(k) {
+        const res = await fetch(`${API_URL}?k=${encodeURIComponent(k)}`, {
+          method: "DELETE",
+          credentials: "same-origin",
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({ error: res.statusText }));
+          throw new Error(err.error || `HTTP ${res.status}`);
+        }
+        return res.json();
+      }
+
+      async loadManifest() {
+        const k = await this.crypto.hashPath(WIKI_V2.MANIFEST_PATH);
+        const v = await this._getRaw(k);
+        if (!v) {
+          return { v: WIKI_V2.VERSION, type: "manifest", updated: 0, tree: { home: { type: "page", title: "Home", updated: 0 } } };
+        }
+        return this.crypto.decryptObject(v);
+      }
+
+      async getPage(wikiPath) {
+        const clean = this.normalizePath(wikiPath);
+        const k = await this.crypto.hashPath(clean);
+        const v = await this._getRaw(k);
+        if (!v) return null;
+        return this.crypto.decryptObject(v);
+      }
+
+      async savePage(wikiPath, title, content, { trickleChaff = false } = {}) {
+        const clean = this.normalizePath(wikiPath);
+        const now = Date.now();
+        const existing = await this.getPage(clean);
+        const pageTitle = title.trim() || clean.split("/").pop().replace(/-/g, " ");
+        const updateManifest = $("chk-update-manifest").checked;
+
+        const pagePayload = {
+          v: WIKI_V2.VERSION, type: "page", title: pageTitle, content,
+          created: existing?.created || now, updated: now,
+        };
+
+        const manifest = await this.loadManifest();
+        const segments = clean.split("/").filter(Boolean);
+        let curr = manifest.tree;
+        for (let i = 0; i < segments.length - 1; i++) {
+          const seg = segments[i];
+          if (!curr[seg]) curr[seg] = { type: "directory", children: {} };
+          curr = curr[seg].children;
+        }
+        curr[segments[segments.length - 1]] = { type: "page", title: pageTitle, updated: now };
+
+        const manifestPayload = { ...manifest, v: WIKI_V2.VERSION, type: "manifest", updated: now };
+
+        const [pageK, pageV, manifestK, manifestV] = await Promise.all([
+          this.crypto.hashPath(clean),
+          this.crypto.encryptObject(pagePayload),
+          this.crypto.hashPath(WIKI_V2.MANIFEST_PATH),
+          this.crypto.encryptObject(manifestPayload),
+        ]);
+
+        let entries
+        if( updateManifest ) {
+          entries = [{ k: pageK, v: pageV }, { k: manifestK, v: manifestV }];
+        } else {
+          entries = [{ k: pageK, v: pageV }];
+        }
+        if (trickleChaff) entries.push(...(await buildMarkovDecoyWorkspaceEntries()));
+
+        await this._postBatch(entries);
+        return { path: clean, title: pageTitle, updated: now, manifest };
+      }
+
+      async deletePage(wikiPath) {
+        const clean = this.normalizePath(wikiPath);
+        if (clean === "/home") throw new Error("Cannot delete /home.");
+
+        const k = await this.crypto.hashPath(clean);
+        await this._deleteRaw(k);
+
+        const manifest = await this.loadManifest();
+        const segments = clean.split("/").filter(Boolean);
+        let curr = manifest.tree;
+        for (let i = 0; i < segments.length - 1; i++) {
+          if (!curr[segments[i]]) return manifest;
+          curr = curr[segments[i]].children;
+        }
+        delete curr[segments[segments.length - 1]];
+
+        const manifestK = await this.crypto.hashPath(WIKI_V2.MANIFEST_PATH);
+        const manifestV = await this.crypto.encryptObject({ ...manifest, v: WIKI_V2.VERSION, type: "manifest", updated: Date.now() });
+
+        await this._postBatch([{ k: manifestK, v: manifestV }]);
+        return manifest;
+      }
+    }
+
+    // ========================================================================
+    // 3. Parser, Unified Debouncer (highlight.js + MathJax), Copy Buttons & UI
+    // ========================================================================
+    const mdParser = new ExtensibleMarkdownParser({
+      blockSpecials: { csv: csvBlockSpecial, abc: abcBlockSpecial },
+      inlineSpecials: {
+        flibble: (text, parser) => {
+          const safe = parser.escapeHtml(text);
+          const width = Math.max(80, safe.length * 9 + 24);
+          return `<svg class="swiki-badge" width="${width}" height="24" viewBox="0 0 ${width} 24" xmlns="http://www.w3.org/2000/svg"><rect x="0.5" y="0.5" width="${width - 1}" height="23" rx="4" fill="#22262f" stroke="#7c9cff"/><text x="${width / 2}" y="16" fill="#e4e7ec" font-family="monospace" font-size="12" text-anchor="middle">${safe}</text></svg>`;
+        },
+        rabbit: (text, parser) => {
+          try {
+            const delim = text[0]
+            const xs = text.substr(1).split(delim,2)
+            const passphrase = xs[0].replace(/"/g,"")
+            const targetPage = xs.length == 2 ? xs[1].replace(/"/g,"").replace(/^\/*/,"/") : "/home"
+            return `<span class="rabbit-hole" passphrase="${passphrase}" page="${targetPage}">${passphrase}${targetPage}</span>`;
+          } catch(e) {
+            return `<span class="rabbit-error">Invalid Rabbit</span>`
+          } 
+        },
+      },
+    });
+
+    let client = null;
+    let currentManifest = null;
+    let currentPath = "/home";
+    let dirty = false;
+    const viewModes = ["split", "edit", "read"];
+    let viewModeIdx = 0;
+    let selectedIndex = 0;
+    let filteredQuickPages = [];
+    let enhanceTimer = null;
+
+    const $ = (id) => document.getElementById(id);
+
+    function setStatus(msg, type = "") {
+      const pill = $("status-pill");
+      pill.textContent = msg;
+      pill.className = type;
+    }
+
+    function hasMathDelimiters(text) {
+      return /\\\(|\\\[/.test(text);
+    }
+
+    function applySyntaxHighlighting(pane) {
+      if (!window.hljs) return;
+      const blocks = pane.querySelectorAll("pre code");
+      for (const el of blocks) {
+        el.removeAttribute("data-highlighted");
+        window.hljs.highlightElement(el);
+      }
+    }
+
+    async function applyMathJax(pane) {
+      if (!hasMathDelimiters(pane.innerHTML)) return;
+      const mj = window.MathJax;
+      if (!mj) return;
+
+      if (typeof mj.typesetClear === "function") {
+        mj.typesetClear([pane]);
+      }
+
+      if (typeof mj.typesetPromise === "function") {
+        try {
+          await mj.typesetPromise([pane]);
+        } catch {
+          // Ignore superseded typeset calls during rapid edits
+        }
+      } else if (typeof mj.typeset === "function") {
+        mj.typeset([pane]);
+      }
+    }
+
+    function applyAbc(pane) {
+      const elements = pane.querySelectorAll('div.abc-to-render');
+
+      elements.forEach((el, index) => {
+        const abc = el.textContent;
+
+        // Give each element a unique ID
+        const id = `abc-render-${index}`;
+
+        el.id = id;
+
+        ABCJS.renderAbc(id, abc, {
+          responsive: 'resize'
+        });
+      });
+    }
+
+    function runEnhancements(pane) {
+      applySyntaxHighlighting(pane);
+      applyMathJax(pane);
+      applyAbc(pane);
+      applyRabbit(pane);
+    }
+
+    function clearEnhanceTimer() {
+      if (enhanceTimer !== null) {
+        clearTimeout(enhanceTimer);
+        enhanceTimer = null;
+      }
+    }
+
+    function scheduleEnhancements(pane, delayMs = 200) {
+      clearEnhanceTimer();
+      enhanceTimer = setTimeout(() => {
+        enhanceTimer = null;
+        runEnhancements(pane);
+      }, delayMs);
+    }
+
+    function applyRabbit(pane) {
+      const rabbits = pane.querySelectorAll("span.rabbit-hole[passphrase][page]")
+      rabbits.forEach( rabbit => {
+        rabbit.addEventListener("click", e => {
+          e.preventDefault()
+          const passphrase = rabbit.getAttribute("passphrase")
+          const page = rabbit.getAttribute("page")
+          newDocumentSpace(passphrase,page)
+        })
+      })
+    }
+
+    function attachCodeCopyButtons(pane) {
+      const preBlocks = pane.querySelectorAll("pre");
+      for (const pre of preBlocks) {
+        if (pre.querySelector(".code-copy-btn")) continue;
+        const codeEl = pre.querySelector("code");
+        if (!codeEl) continue;
+
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "code-copy-btn";
+        btn.textContent = "Copy";
+        btn.title = "Copy code to clipboard";
+
+        btn.onclick = async () => {
+          try {
+            await navigator.clipboard.writeText(codeEl.innerText);
+            btn.textContent = "Copied";
+            btn.classList.add("copied");
+            setTimeout(() => {
+              btn.textContent = "Copy";
+              btn.classList.remove("copied");
+            }, 1500);
+          } catch {
+            btn.textContent = "Failed";
+            setTimeout(() => {
+              btn.textContent = "Copy";
+            }, 1500);
+          }
+        };
+
+        pre.appendChild(btn);
+      }
+    }
+
+    function renderPreviewNow({ debounce = false } = {}) {
+      const pane = $("preview-pane");
+      pane.innerHTML = mdParser.parse($("editor-textarea").value);
+      attachCodeCopyButtons(pane);
+
+      if (debounce) {
+        scheduleEnhancements(pane, 200);
+      } else {
+        clearEnhanceTimer();
+        runEnhancements(pane);
+      }
+    }
+
+    function updateBlockIndicator() {
+      const sample = JSON.stringify({
+        v: 2, type: "page",
+        title: $("page-title-input").value,
+        content: $("editor-textarea").value,
+        created: Date.now(), updated: Date.now(), _pad: "",
+      });
+      const bytes = encoder.encode(sample).byteLength;
+      const blocks = Math.max(1, Math.ceil(bytes / WIKI_V2.BLOCK_SIZE));
+      $("block-indicator").textContent = `${blocks} × 4096 B (${bytes} B raw)`;
+    }
+
+    function flattenManifest(tree, prefix = "") {
+      const list = [];
+      for (const [k, v] of Object.entries(tree || {})) {
+        const full = `${prefix}/${k}`.replace(/\/+/g, "/");
+        if (v.type === "directory") {
+          list.push(...flattenManifest(v.children, full));
+        } else {
+          list.push({ path: full, title: v.title || k, updated: v.updated || 0 });
+        }
+      }
+      return list;
+    }
+
+    function renderSidebarTree() {
+      const container = $("tree-container");
+      container.innerHTML = "";
+      const pages = flattenManifest(currentManifest?.tree);
+      $("page-count-label").textContent = `${pages.length} page${pages.length === 1 ? "" : "s"}`;
+
+      const buildBranch = (node, prefix = "") => {
+        const frag = document.createDocumentFragment();
+        const entries = Object.entries(node || {}).sort(([aKey, aVal], [bKey, bVal]) => {
+          if (aVal.type !== bVal.type) return aVal.type === "directory" ? -1 : 1;
+          return aKey.localeCompare(bKey);
+        });
+
+        for (const [key, val] of entries) {
+          const fullPath = `${prefix}/${key}`.replace(/\/+/g, "/");
+          if (val.type === "directory") {
+            const dirLabel = document.createElement("div");
+            dirLabel.className = "tree-dir-label";
+            dirLabel.textContent = `▾ ${key}/`;
+            const childBox = document.createElement("div");
+            childBox.className = "tree-children";
+            childBox.appendChild(buildBranch(val.children, fullPath));
+            dirLabel.onclick = () => {
+              const hidden = childBox.style.display === "none";
+              childBox.style.display = hidden ? "block" : "none";
+              dirLabel.textContent = `${hidden ? "▾" : "▸"} ${key}/`;
+            };
+            frag.append(dirLabel, childBox);
+          } else {
+            const item = document.createElement("div");
+            item.className = "tree-page-item" + (fullPath === currentPath ? " active" : "");
+            item.textContent = val.title || key;
+            item.title = fullPath;
+            item.onclick = () => openPage(fullPath);
+            frag.appendChild(item);
+          }
+        }
+        return frag;
+      };
+
+      container.appendChild(buildBranch(currentManifest?.tree));
+    }
+
+    async function newDocumentSpace(passphrase,page="/home") {
+      try {
+        const cryptoEngine = new BrowserCryptoEngineV2();
+        await cryptoEngine.initialize(passphrase);
+        client = new ApiPhpWikiClient(cryptoEngine);
+        currentManifest = await client.loadManifest();
+        await openPage(page);
+      } catch (err) {
+        setStatus(err.message, "err") 
+      }
+    }
+
+    async function openPage(wikiPath) {
+      if (dirty && !confirm("Discard unsaved changes?")) return;
+      const clean = client.normalizePath(wikiPath);
+      setStatus("Loading...");
+      try {
+        const page = await client.getPage(clean);
+        currentPath = clean;
+        $("page-path-display").textContent = clean;
+        if (page) {
+          $("page-title-input").value = page.title || "";
+          $("editor-textarea").value = page.content || "";
+          $("page-updated-label").textContent = page.updated ? new Date(page.updated).toLocaleString() : "New";
+        } else {
+          $("page-title-input").value = clean.split("/").pop().replace(/-/g, " ");
+          $("editor-textarea").value = `# ${$("page-title-input").value}\n\n`;
+          $("page-updated-label").textContent = "Unsaved";
+        }
+        dirty = false;
+        $("btn-delete").disabled = clean === "/home";
+        renderPreviewNow();
+        updateBlockIndicator();
+        renderSidebarTree();
+        setStatus("Synced", "ok");
+        document.title = `${INITIAL_TITLE} - ${wikiPath}`
+      } catch (err) {
+        setStatus(err.message, "err");
+      }
+    }
+
+    async function saveCurrentPage() {
+      setStatus("Encrypting & saving...");
+      try {
+        const trickleChaff = $("chk-trickle-chaff").checked;
+        const res = await client.savePage(
+          currentPath, $("page-title-input").value, $("editor-textarea").value, { trickleChaff }
+        );
+        currentManifest = res.manifest;
+        dirty = false;
+        $("page-updated-label").textContent = new Date(res.updated).toLocaleString();
+        renderSidebarTree();
+        setStatus(trickleChaff ? "Saved + 21 chaff rows" : "Saved (4K aligned)", "ok");
+      } catch (err) {
+        setStatus(err.message, "err");
+      }
+    }
+
+    $("unlock-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const pass = $("passphrase-input").value;
+      $("unlock-error").textContent = "";
+      $("unlock-btn").disabled = true;
+      $("unlock-btn").textContent = "Deriving keys...";
+
+      try {
+        const cryptoEngine = new BrowserCryptoEngineV2();
+        await cryptoEngine.initialize(pass);
+        $("passphrase-input").value = "";
+
+        client = new ApiPhpWikiClient(cryptoEngine);
+        currentManifest = await client.loadManifest();
+
+        $("unlock-screen").style.display = "none";
+        $("app").classList.add("active");
+        await openPage("/home");
+      } catch (err) {
+        $("unlock-error").textContent = err.message || "Failed to unlock workspace.";
+      } finally {
+        $("unlock-btn").disabled = false;
+        $("unlock-btn").textContent = "Derive Keys & Unlock";
+      }
+    });
+
+    $("editor-textarea").addEventListener("input", () => {
+      dirty = true;
+      renderPreviewNow({ debounce: true });
+      updateBlockIndicator();
+      setStatus("Modified");
+    });
+
+    $("editor-textarea").addEventListener("keydown", (e) => {
+      if (e.key === "Tab") {
+        e.preventDefault();
+        const ta = e.target;
+        const start = ta.selectionStart;
+        ta.value = ta.value.slice(0, start) + "  " + ta.value.slice(ta.selectionEnd);
+        ta.selectionStart = ta.selectionEnd = start + 2;
+        ta.dispatchEvent(new Event("input"));
+      }
+    });
+
+    $("page-title-input").addEventListener("input", () => {
+      dirty = true;
+      updateBlockIndicator();
+      setStatus("Modified");
+    });
+
+    $("preview-pane").addEventListener("click", (e) => {
+      const link = e.target.closest("[data-wiki-link]");
+      if (link) {
+        e.preventDefault();
+        openPage(link.getAttribute("data-wiki-link"));
+      }
+    });
+
+    $("btn-save").onclick = saveCurrentPage;
+
+    $("btn-new-page").onclick = () => {
+      const raw = prompt("New page path (e.g., /notes/protocol-design):");
+      if (!raw) return;
+      openPage(raw);
+    };
+
+    $("btn-reload").onclick = async () => {
+      setStatus("Syncing manifest...");
+      currentManifest = await client.loadManifest();
+      await openPage(currentPath);
+    };
+
+    $("btn-delete").onclick = async () => {
+      if (currentPath === "/home") return;
+      if (!confirm(`Delete ${currentPath}?`)) return;
+      try {
+        currentManifest = await client.deletePage(currentPath);
+        dirty = false;
+        await openPage("/home");
+      } catch (err) {
+        setStatus(err.message, "err");
+      }
+    };
+
+    $("btn-view-mode").onclick = () => {
+      viewModeIdx = (viewModeIdx + 1) % viewModes.length;
+      const mode = viewModes[viewModeIdx];
+      $("panes-container").className = "panes" + (mode === "split" ? "" : ` mode-${mode}`);
+      $("btn-view-mode").textContent =
+        mode === "split" ? "Split View" : mode === "edit" ? "Edit Only" : "Read Only";
+      renderPreviewNow();
+    };
+
+    $("btn-lock").onclick = () => {
+      if (dirty && !confirm("Lock workspace and discard unsaved edits?")) return;
+      clearEnhanceTimer();
+      client?.crypto.lock();
+      client = null;
+      currentManifest = null;
+      dirty = false;
+      $("editor-textarea").value = "";
+      $("preview-pane").innerHTML = "";
+      $("app").classList.remove("active");
+      $("unlock-screen").style.display = "flex";
+      $("passphrase-input").focus();
+    };
+
+    function openQuickModal() {
+      const modal = $("quick-modal");
+      modal.classList.add("open");
+      const input = $("quick-input");
+      input.value = "";
+      selectedIndex = 0;
+      renderQuickList("");
+      input.focus();
+    }
+
+    function updateQuickSelection() {
+      const items = $("quick-results").children;
+      for (let i = 0; i < items.length; i++) {
+        if (i === selectedIndex) {
+          items[i].classList.add("selected");
+          items[i].scrollIntoView({ block: "nearest" });
+        } else {
+          items[i].classList.remove("selected");
+        }
+      }
+    }
+
+    function renderQuickList(query) {
+      const q = query.trim().toLowerCase();
+      filteredQuickPages = flattenManifest(currentManifest?.tree).filter(
+        (p) => p.path.toLowerCase().includes(q) || p.title.toLowerCase().includes(q)
+      );
+      if (q.startsWith("/") && !filteredQuickPages.some((p) => p.path.toLowerCase() === q)) {
+        filteredQuickPages.unshift({ path: q, title: `Create or open ${q}`, updated: Date.now() });
+      }
+      if (selectedIndex >= filteredQuickPages.length) {
+        selectedIndex = Math.max(0, filteredQuickPages.length - 1);
+      }
+
+      const box = $("quick-results");
+      box.innerHTML = "";
+      filteredQuickPages.forEach((p, idx) => {
+        const row = document.createElement("div");
+        row.className = "quick-item" + (idx === selectedIndex ? " selected" : "");
+        row.innerHTML = `<span>${p.title}</span><span class="path">${p.path}</span>`;
+        row.onmouseenter = () => { selectedIndex = idx; updateQuickSelection(); };
+        row.onclick = () => { $("quick-modal").classList.remove("open"); openPage(p.path); };
+        box.appendChild(row);
+      });
+    }
+
+    $("btn-quick-open").onclick = openQuickModal;
+    $("quick-input").addEventListener("input", (e) => { selectedIndex = 0; renderQuickList(e.target.value); });
+    $("quick-input").addEventListener("keydown", (e) => {
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        if (filteredQuickPages.length > 0) {
+          selectedIndex = (selectedIndex + 1) % filteredQuickPages.length;
+          updateQuickSelection();
+        }
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        if (filteredQuickPages.length > 0) {
+          selectedIndex = (selectedIndex - 1 + filteredQuickPages.length) % filteredQuickPages.length;
+          updateQuickSelection();
+        }
+      } else if( e.key === "Enter" && e.shiftKey) {
+        // go to exactly as typed
+        e.preventDefault();
+        const val = $("quick-input").value.trim();
+        if( val.length > 0 ) {
+          const target = val.startsWith("/") ? val : "/" + val;
+          $("quick-modal").classList.remove("open");
+          openPage(target);
+        } 
+      } else if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        if (filteredQuickPages.length > 0 && filteredQuickPages[selectedIndex]) {
+          const target = filteredQuickPages[selectedIndex].path;
+          $("quick-modal").classList.remove("open");
+          openPage(target);
+        } else {
+          const val = $("quick-input").value.trim();
+          if (val) {
+            const target = val.startsWith("/") ? val : "/" + val;
+            $("quick-modal").classList.remove("open");
+            openPage(target);
+          }
+        }
+      }
+    });
+    $("quick-modal").addEventListener("click", (e) => {
+      if (e.target.id === "quick-modal") $("quick-modal").classList.remove("open");
+    });
+
+    function publishMarkdown(markdown, title="Rendered Markdown") {
+      const form = document.createElement('form');
+
+      form.method = 'POST';
+      form.action = 'render-post.php';
+      form.target = '_blank';
+
+      let input
+      input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = 'markdown';
+      input.value = markdown;
+      form.appendChild(input);
+      input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = 'title';
+      input.value = title;
+      form.appendChild(input);
+
+
+      document.body.appendChild(form);
+
+      form.submit();
+      form.remove();
+    }
+
+    function getBracketedExpression(textarea) {
+      const text = textarea.value;
+      const pos = textarea.selectionStart;
+
+      const start = text.lastIndexOf('[[', pos);
+      const end = text.indexOf(']]', pos);
+
+      if (start === -1 || end === -1 || end < start) {
+        return false;
+      }
+
+      // Make sure there isn't a closing delimiter between
+      // the opening delimiter and the cursor.
+      const intervening = text.lastIndexOf(']]', pos);
+      if (intervening > start) {
+        return false;
+      }
+
+      return text.substring(start + 2, end);
+    }
+
+
+    $('editor-textarea').addEventListener('keydown', function(e) {
+      if (e.altKey && e.key === 'Enter') {
+        const page = getBracketedExpression(this);
+
+        if (page !== false) {
+          e.preventDefault();
+          openPage(page);
+        }
+      }
+    });
+
+    window.addEventListener("keydown", (e) => {
+      const key = e.key.toLowerCase();
+      const mod = e.ctrlKey || e.metaKey;
+
+      if (mod && e.shiftKey && key === "k") {
+        e.preventDefault();
+        if (client) $("btn-new-page").click();
+      } else if (mod && !e.shiftKey && key === "s") {
+        e.preventDefault();
+        if (client) saveCurrentPage();
+      } else if (mod && !e.shiftKey && key === "b") {
+        e.preventDefault();
+        document.body.classList.toggle("hide-sidebar")
+      } else if (mod && !e.shiftKey && key === "d") {
+        e.preventDefault();
+        document.body.classList.toggle("light-preview")
+      } else if (mod && !e.shiftKey && key === "k") {
+        e.preventDefault();
+        if (client) openQuickModal();
+      } else if (mod && e.altKey && key === "p") {
+        const raw = prompt("New passphrase");
+        if (!raw) return;
+        newDocumentSpace(raw);
+      } else if (mod && e.shiftKey && key === "p") {
+        e.preventDefault();
+        const markdown = $("editor-textarea").value;
+        const title = $("page-title-input").value
+        publishMarkdown(markdown,title)
+      } else if (mod && !e.shiftKey && key === "e") {
+        e.preventDefault();
+        if (client) $("btn-view-mode").click();
+      } else if (e.key === "Escape") {
+        const quickModal = $("quick-modal");
+        if (quickModal.classList.contains("open")) {
+          e.preventDefault();
+          quickModal.classList.remove("open");
+          return;
+        }
+        if (client && viewModes[viewModeIdx] !== "read") {
+          e.preventDefault();
+          $("editor-textarea").focus();
+        }
+      }
+    });
+
+    $('sidebar-toggle').addEventListener("click", (e) => {
+      document.body.classList.toggle("hide-sidebar")
+    })
+
+  </script>
+</body>
+</html>
